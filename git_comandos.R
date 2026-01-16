@@ -6,16 +6,16 @@ library(gert)
 
 gert::git_status() |>
   as.data.frame() |>
-  dplyr::filter(file |> stringr::str_detect(".R$"))
+  dplyr::filter(file |> stringr::str_detect(".docx$"))
 
 # Adicionado arquivos ----
 
-gert::git_add(list.files(pattern = "^settando_")) |>
+gert::git_add(list.files(pattern = "git_comandos.R")) |>
   as.data.frame()
 
 # Commitando ----
 
-gert::git_commit("Arquivo .Rproj")
+gert::git_commit("Script para comandos de Git")
 
 # Pushando ----
 
@@ -26,6 +26,8 @@ gert::git_push(remote = "origin", force = TRUE)
 gert::git_pull()
 
 # Resetando ----
+
+gert::git_reset_mixed()
 
 gert::git_reset_soft("HEAD~1")
 
