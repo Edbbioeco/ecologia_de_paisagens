@@ -332,14 +332,14 @@ unificado <- purrr::map2(buffers$Área,
                          fragmentos,
                          purrr::in_parallel(
 
-              cobertura_cortado |>
+              ~cobertura_cortado |>
                 terra::mask(buffers |>
-                              dplyr::filter(Área == nomes_1)) |>
+                              dplyr::filter(Área == .x)) |>
                 terra::crop(buffers |>
-                              dplyr::filter(Área == nomes_1)) |>
+                              dplyr::filter(Área == .x)) |>
                 as.data.frame(xy = TRUE) |>
                 dplyr::rename("Categoria" = brasil_coverage_2023) |>
-                dplyr::mutate(Área = nomes_2,
+                dplyr::mutate(Área = .y,
                               Categoria = Categoria |> as.character()) |>
                 dplyr::relocate(Área, .before = Categoria)
 
