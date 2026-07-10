@@ -328,32 +328,23 @@ buffers %>%
 
 ### Recortando para os buffers ----
 
-calculo_raster <- function(nomes_1, nomes_2){
+unificado <- purrr::map2(buffers$Área,
+                         fragmentos,
+                         purrr::in_parallel(
 
-  recortando <- cobertura_cortado %>%
-    terra::mask(buffers %>% dplyr::filter(Área == nomes_1)) %>%
-    terra::crop(buffers %>% dplyr::filter(Área == nomes_1))
+              cobertura_cortado %>%
+                terra::mask(buffers %>%
+                              dplyr::filter(Área == nomes_1)) %>%
+                terra::crop(buffers %>%
+                              dplyr::filter(Área == nomes_1)) %>%
+                as.data.frame(xy = TRUE) %>%
+                dplyr::rename("Categoria" = brasil_coverage_2023) %>%
+                dplyr::mutate(Área = nomes_2,
+                              Categoria = Categoria %>% as.character()) %>%
+                dplyr::relocate(Área, .before = Categoria)
 
-  recortando_df <- recortando %>%
-    as.data.frame(xy = TRUE) %>%
-    dplyr::rename("Categoria" = brasil_coverage_2023) %>%
-    dplyr::mutate(Área = nomes_2,
-                  Categoria = Categoria %>% as.character()) %>%
-    dplyr::relocate(Área, .before = Categoria)
-
-  assign(paste0("cobertura_buffer_id", nomes_2), recortando_df, envir = globalenv())
-
-}
-
-purrr::walk2(buffers$Área, fragmentos, calculo_raster)
-
-### Unificando os data frames ----
-
-objetos <- ls(pattern = "^cobertura_buffer_id")
-
-objetos <- mget(objetos)
-
-unificado <- objetos %>%
+            ),
+            .progress = TRUE) %>%
   dplyr::bind_rows()
 
 unificado
