@@ -46,12 +46,12 @@ dados_sps <- readxl::read_xlsx("anfibios_inventários.xlsx")
 
 dados_sps
 
-dados_sps %>% dplyr::glimpse()
+dados_sps |> dplyr::glimpse()
 
 ### Tratando ----
 
-dados_sps_trat <- dados_sps %>%
-  dplyr::select(-Família) %>%
+dados_sps_trat <- dados_sps |>
+  dplyr::select(-Família) |>
   tidyr::pivot_wider(names_from = Espécie,
                      values_from = Presença,
                      values_fill = 0)
@@ -60,7 +60,7 @@ dados_sps_trat
 
 fragmentos <- dados_sps_trat$Área
 
-dados_sps_trat <- dados_sps_trat %>%
+dados_sps_trat <- dados_sps_trat |>
   dplyr::select_if(is.numeric)
 
 rownames(dados_sps_trat) <- fragmentos
@@ -78,13 +78,13 @@ coords <- readxl::read_xlsx("anfibios_inventários.xlsx",
 
 coords
 
-coords %>% dplyr::glimpse()
+coords |> dplyr::glimpse()
 
 ### Tratando ----
 
-coords_trat <- coords %>%
-  dplyr::mutate(Longitude = Longitude %>% parzer::parse_lon(),
-                Latitude = Latitude %>% parzer::parse_lat())
+coords_trat <- coords |>
+  dplyr::mutate(Longitude = Longitude |> parzer::parse_lon(),
+                Latitude = Latitude |> parzer::parse_lat())
 
 coords_trat
 
@@ -96,37 +96,37 @@ coords_trat
 
 #### Importando ----
 
-estados <- sf::st_read("estados.shp") %>%
+estados <- sf::st_read("estados.shp") |>
   dplyr::filter(abbrv_s %in% c("AL", "PE", "PB", "RN"))
 
-mata_atlantica <- sf::st_read("biomas.shp") %>%
+mata_atlantica <- sf::st_read("biomas.shp") |>
   dplyr::filter(name_biome == "Mata Atlântica")
 
 #### Visualizando ----
 
 estados
 
-estados %>%
+estados |>
   ggplot() +
   geom_sf()
 
 mata_atlantica
 
-mata_atlantica %>%
+mata_atlantica |>
   ggplot() +
   geom_sf()
 
 #### Tratando ----
 
-cep <- estados %>%
-  sf::st_intersection(mata_atlantica) %>%
-  sf::st_buffer(0) %>%
-  sf::st_union() %>%
+cep <- estados |>
+  sf::st_intersection(mata_atlantica) |>
+  sf::st_buffer(0) |>
+  sf::st_union() |>
   sf::st_sf()
 
 cep
 
-cep %>%
+cep |>
   ggplot() +
   geom_sf()
 
@@ -140,20 +140,20 @@ cobertura <- terra::rast("brasil_coverage_2023.tif")
 
 #### Visualizando ----
 
-cobertura %>% plot()
+cobertura |> plot()
 
 #### Tratando ----
 
-cep <- cep %>%
-  sf::st_transform(crs = cobertura %>% sf::st_crs())
+cep <- cep |>
+  sf::st_transform(crs = cobertura |> sf::st_crs())
 
-cobertura_cortado <- cobertura %>%
-  terra::crop(cep) %>%
+cobertura_cortado <- cobertura |>
+  terra::crop(cep) |>
   terra::mask(cep)
 
 cobertura_cortado
 
-cobertura_cortado %>% plot()
+cobertura_cortado |> plot()
 
 ### Variáveis bioclimáticas ----
 
@@ -166,20 +166,20 @@ bioclim <- geodata::worldclim_country(country = "Brazil",
 
 #### Visualizando
 
-bioclim %>% plot()
+bioclim |> plot()
 
 #### Recortando ----
 
-cep <- cep %>%
-  sf::st_transform(crs = bioclim %>% sf::st_crs())
+cep <- cep |>
+  sf::st_transform(crs = bioclim |> sf::st_crs())
 
-bioclim_cortado <- bioclim[[c(9, 16)]] %>%
-  terra::crop(cep) %>%
+bioclim_cortado <- bioclim[[c(9, 16)]] |>
+  terra::crop(cep) |>
   terra::mask(cep)
 
 bioclim_cortado
 
-bioclim_cortado %>% plot()
+bioclim_cortado |> plot()
 
 ### Imagens de satélite ----
 
@@ -203,7 +203,7 @@ ggplot() +
 
 ## Riqueza ----
 
-riqueza <- dados_sps_trat %>%
+riqueza <- dados_sps_trat |>
   vegan::specnumber()
 
 riqueza
@@ -212,7 +212,7 @@ riqueza
 
 ### Calculando ----
 
-comp <- dados_sps_trat %>%
+comp <- dados_sps_trat |>
  betapart::beta.pair(index.family = "jaccard")
 
 comp
@@ -221,54 +221,54 @@ comp
 
 #### Sorensen ----
 
-sorensen <- comp$beta.jac %>%
+sorensen <- comp$beta.jac |>
   as.matrix()
 
 sorensen[upper.tri(sorensen)] <- NA
 
-sorensen_vetor <- sorensen %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+sorensen_vetor <- sorensen |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(tipo = "Jaccard",
                 Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
   dplyr::select(-Igual)
 
 sorensen_vetor
 
 #### Substituição ----
 
-tur <- comp$beta.jtu %>%
+tur <- comp$beta.jtu |>
   as.matrix()
 
 tur[upper.tri(tur)] <- NA
 
-tur_vetor <- tur %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+tur_vetor <- tur |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(tipo = "Substituição",
                 Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
   dplyr::select(-Igual)
 
 tur_vetor
 
 #### Aninhamento ----
 
-sne <- comp$beta.jne %>%
+sne <- comp$beta.jne |>
   as.matrix()
 
 sne[upper.tri(sne)] <- NA
 
-sne_vetor <- sne %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+sne_vetor <- sne |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(tipo = "Aninhamento",
                 Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
   dplyr::select(-Igual)
 
 sne_vetor
@@ -277,15 +277,15 @@ sne_vetor
 
 div_beta_df <- dplyr::bind_rows(sorensen_vetor,
                                 tur_vetor,
-                                sne_vetor) %>%
-  dplyr::mutate(tipo = tipo %>% forcats::fct_relevel(c("Jaccard",
+                                sne_vetor) |>
+  dplyr::mutate(tipo = tipo |> forcats::fct_relevel(c("Jaccard",
                                                       "Substituição",
-                                                      "Aninhamento"))) %>%
+                                                      "Aninhamento"))) |>
 dplyr::rename("Índice de Diversidade Beta" = value)
 
 div_beta_df
 
-div_beta_df %>%
+div_beta_df |>
   ggplot(aes(Var1, Var2, fill = `Índice de Diversidade Beta`)) +
   geom_tile(color = "black", linewidth = 0.75) +
   coord_equal() +
@@ -313,14 +313,14 @@ ggsave(filename = "diversidade_beta_anuros.png", height = 10, width = 12)
 
 ## Criando os buffers ----
 
-buffers <- coords_trat %>%
+buffers <- coords_trat |>
   sf::st_as_sf(coords = c("Longitude", "Latitude"),
-               crs = cobertura %>% terra::crs()) %>%
+               crs = cobertura |> terra::crs()) |>
   sf::st_buffer(4000)
 
 buffers
 
-buffers %>%
+buffers |>
   ggplot() +
   geom_sf()
 
@@ -332,27 +332,27 @@ unificado <- purrr::map2(buffers$Área,
                          fragmentos,
                          purrr::in_parallel(
 
-              cobertura_cortado %>%
-                terra::mask(buffers %>%
-                              dplyr::filter(Área == nomes_1)) %>%
-                terra::crop(buffers %>%
-                              dplyr::filter(Área == nomes_1)) %>%
-                as.data.frame(xy = TRUE) %>%
-                dplyr::rename("Categoria" = brasil_coverage_2023) %>%
+              cobertura_cortado |>
+                terra::mask(buffers |>
+                              dplyr::filter(Área == nomes_1)) |>
+                terra::crop(buffers |>
+                              dplyr::filter(Área == nomes_1)) |>
+                as.data.frame(xy = TRUE) |>
+                dplyr::rename("Categoria" = brasil_coverage_2023) |>
                 dplyr::mutate(Área = nomes_2,
-                              Categoria = Categoria %>% as.character()) %>%
+                              Categoria = Categoria |> as.character()) |>
                 dplyr::relocate(Área, .before = Categoria)
 
             ),
-            .progress = TRUE) %>%
+            .progress = TRUE) |>
   dplyr::bind_rows()
 
 unificado
 
 ### Número de categorias ----
 
-numero_categorias <- unificado %>%
-  dplyr::summarise(`Número de categorias` = Categoria %>% dplyr::n_distinct(),
+numero_categorias <- unificado |>
+  dplyr::summarise(`Número de categorias` = Categoria |> dplyr::n_distinct(),
                    .by = Área)
 
 numero_categorias
@@ -361,13 +361,13 @@ numero_categorias
 
 #### Criando um novo dataframe ----
 
-abundancia_categorias <- unificado %>%
-  dplyr::group_by(Área, Categoria) %>%
-  dplyr::summarise(Abundância = n()) %>%
+abundancia_categorias <- unificado |>
+  dplyr::group_by(Área, Categoria) |>
+  dplyr::summarise(Abundância = n()) |>
   tidyr::pivot_wider(names_from = Categoria,
                      values_from = Abundância,
-                     values_fill = 0) %>%
-  dplyr::ungroup() %>%
+                     values_fill = 0) |>
+  dplyr::ungroup() |>
   dplyr::select_if(is.numeric)
 
 rownames(abundancia_categorias) <- fragmentos
@@ -376,7 +376,7 @@ abundancia_categorias
 
 #### Calculando a diversidade ----
 
-diversidade <- abundancia_categorias %>%
+diversidade <- abundancia_categorias |>
   hillR::hill_taxa(q = 1)
 
 diversidade
@@ -389,13 +389,13 @@ bio_medias_temp_secos <- numeric(0)
 
 media_bio_temp_secos <- function(nomes_1){
 
-  recortando <- bioclim_cortado[[1]] %>%
-    terra::mask(buffers %>% dplyr::filter(Área == nomes_1)) %>%
-    terra::crop(buffers %>% dplyr::filter(Área == nomes_1))
+  recortando <- bioclim_cortado[[1]] |>
+    terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
+    terra::crop(buffers |> dplyr::filter(Área == nomes_1))
 
-  resultado_bio_temp_seco <- recortando %>%
-    as.data.frame(xy = TRUE) %>%
-    dplyr::summarise(média = wc2.1_30s_bio_9 %>% mean(na.rm = TRUE)) %>%
+  resultado_bio_temp_seco <- recortando |>
+    as.data.frame(xy = TRUE) |>
+    dplyr::summarise(média = wc2.1_30s_bio_9 |> mean(na.rm = TRUE)) |>
     dplyr::pull(média)
 
   bio_medias_temp_secos <- c(resultado_bio_temp_seco)
@@ -416,13 +416,13 @@ bio_medias_prec_umido <- numeric(0)
 
 media_bio_prec_umido <- function(nomes_1){
 
-  recortando <- bioclim_cortado[[2]] %>%
-    terra::mask(buffers %>% dplyr::filter(Área == nomes_1)) %>%
-    terra::crop(buffers %>% dplyr::filter(Área == nomes_1))
+  recortando <- bioclim_cortado[[2]] |>
+    terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
+    terra::crop(buffers |> dplyr::filter(Área == nomes_1))
 
-  resultado_bio_prec_umido <- recortando %>%
-    as.data.frame(xy = TRUE) %>%
-    dplyr::summarise(média = wc2.1_30s_bio_16 %>% mean(na.rm = TRUE)) %>%
+  resultado_bio_prec_umido <- recortando |>
+    as.data.frame(xy = TRUE) |>
+    dplyr::summarise(média = wc2.1_30s_bio_16 |> mean(na.rm = TRUE)) |>
     dplyr::pull(média)
 
   bio_medias_prec_umido <- c(resultado_bio_prec_umido)
@@ -445,13 +445,13 @@ ndvi_medias <- numeric(0)
 
 media_ndvi <- function(nomes_1){
 
-  recortando <- ndvi %>%
-    terra::mask(buffers %>% dplyr::filter(Área == nomes_1)) %>%
-    terra::crop(buffers %>% dplyr::filter(Área == nomes_1))
+  recortando <- ndvi |>
+    terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
+    terra::crop(buffers |> dplyr::filter(Área == nomes_1))
 
-  resultado_ndvi_medio <- recortando %>%
-    as.data.frame(xy = TRUE) %>%
-    dplyr::summarise(média = ndvi %>% mean(na.rm = TRUE)) %>%
+  resultado_ndvi_medio <- recortando |>
+    as.data.frame(xy = TRUE) |>
+    dplyr::summarise(média = ndvi |> mean(na.rm = TRUE)) |>
     dplyr::pull(média)
 
   ndvi_media <- c(resultado_ndvi_medio)
@@ -472,9 +472,9 @@ ndvi_medias
 
 gerar_buffers <- function(nomes_1, nomes_2){
 
-  recortando <- cobertura_cortado %>%
-    terra::mask(buffers %>% dplyr::filter(Área == nomes_1)) %>%
-    terra::crop(buffers %>% dplyr::filter(Área == nomes_1))
+  recortando <- cobertura_cortado |>
+    terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
+    terra::crop(buffers |> dplyr::filter(Área == nomes_1))
 
   assign(paste0("buffer_", nomes_2), recortando, envir = globalenv())
 
@@ -492,21 +492,21 @@ buffers_lista
 
 ### Área total ----
 
-area_total <- buffers_lista %>%
-  landscapemetrics::lsm_p_area() %>%
-  dplyr::group_by(layer) %>%
-  dplyr::summarise(Área = value %>% sum() * 10000)
+area_total <- buffers_lista |>
+  landscapemetrics::lsm_p_area() |>
+  dplyr::group_by(layer) |>
+  dplyr::summarise(Área = value |> sum() * 10000)
 
 area_total
 
 ### Floresta ----
 
-area_floresta <- buffers_lista %>%
-  landscapemetrics::lsm_p_area() %>%
-  dplyr::filter(class %in% c(1, 3:6, 49, 10:12, 32, 29, 50)) %>%
-  dplyr::rename("Local" = layer) %>%
-  dplyr::group_by(Local) %>%
-  dplyr::summarise(`Área total` = value %>% sum() * 10000) %>%
+area_floresta <- buffers_lista |>
+  landscapemetrics::lsm_p_area() |>
+  dplyr::filter(class %in% c(1, 3:6, 49, 10:12, 32, 29, 50)) |>
+  dplyr::rename("Local" = layer) |>
+  dplyr::group_by(Local) |>
+  dplyr::summarise(`Área total` = value |> sum() * 10000) |>
   dplyr::mutate(Local = fragmentos,
                 `Área relativa` = `Área total` / area_total$Área)
 
@@ -514,12 +514,12 @@ area_floresta
 
  ### Corpos d'água ----
 
-area_corpos_dagua <- buffers_lista %>%
-  landscapemetrics::lsm_p_area() %>%
-  dplyr::filter(class %in% c(26, 31, 33)) %>%
-  dplyr::rename("Local" = layer) %>%
-  dplyr::group_by(Local) %>%
-  dplyr::summarise(`Área total` = value %>% sum() * 10000) %>%
+area_corpos_dagua <- buffers_lista |>
+  landscapemetrics::lsm_p_area() |>
+  dplyr::filter(class %in% c(26, 31, 33)) |>
+  dplyr::rename("Local" = layer) |>
+  dplyr::group_by(Local) |>
+  dplyr::summarise(`Área total` = value |> sum() * 10000) |>
   dplyr::mutate(Local = fragmentos,
                 `Área relativa` = `Área total` / area_total$Área)
 
@@ -529,13 +529,13 @@ area_corpos_dagua
 
 ## Criando a tabela ----
 
-dados_sps_registradas <- dados_sps %>%
-  dplyr::distinct(Espécie, Família) %>%
-  dplyr::arrange(Família) %>%
-  dplyr::relocate(Família, .before = Espécie) %>%
+dados_sps_registradas <- dados_sps |>
+  dplyr::distinct(Espécie, Família) |>
+  dplyr::arrange(Família) |>
+  dplyr::relocate(Família, .before = Espécie) |>
   dplyr:: mutate(Família = dplyr::if_else(row_number() == 1,
                                           Família,
-                                          dplyr::if_else(Família %>% dplyr::lag() != Família,
+                                          dplyr::if_else(Família |> dplyr::lag() != Família,
                                                          Família,
                                                          NA_character_)))
 
@@ -545,28 +545,28 @@ dados_sps_registradas
 
 ### Criando o flextable ----
 
-dados_sps_registradas_flex <- dados_sps_registradas %>%
-  flextable::flextable() %>%
-  flextable::align(align = "center", part = "all") %>%
-  flextable::width(width = 1.3) %>%
-  flextable::font(fontname = "Arial", part = "all") %>%
+dados_sps_registradas_flex <- dados_sps_registradas |>
+  flextable::flextable() |>
+  flextable::align(align = "center", part = "all") |>
+  flextable::width(width = 1.3) |>
+  flextable::font(fontname = "Arial", part = "all") |>
   flextable::fontsize(size = 11)
 
 dados_sps_registradas_flex
 
 ### Salvando o flextable ----
 
-dados_sps_registradas_flex %>%
+dados_sps_registradas_flex |>
   flextable::save_as_docx(path = "tabela_especies_registradas.docx")
 
 # Quantidade de espécies por família ----
 
 ## Criando uma tabela ----
 
-dados_sps_familias <- dados_sps %>%
-  dplyr::summarise(`Número de espécies` = n(), .by = c(Espécie, Família)) %>%
-  dplyr::summarise(`Número de espécies` = n(), .by = Família) %>%
-  dplyr::arrange(`Número de espécies` %>% dplyr::desc())
+dados_sps_familias <- dados_sps |>
+  dplyr::summarise(`Número de espécies` = n(), .by = c(Espécie, Família)) |>
+  dplyr::summarise(`Número de espécies` = n(), .by = Família) |>
+  dplyr::arrange(`Número de espécies` |> dplyr::desc())
 
 dados_sps_familias
 
@@ -574,32 +574,32 @@ dados_sps_familias
 
 ### Criando o flextable ----
 
-dados_sps_familias_flex <- dados_sps_familias %>%
-  flextable::flextable() %>%
-  flextable::align(align = "center", part = "all") %>%
-  flextable::width(width = 1.3) %>%
-  flextable::font(fontname = "Arial", part = "all") %>%
+dados_sps_familias_flex <- dados_sps_familias |>
+  flextable::flextable() |>
+  flextable::align(align = "center", part = "all") |>
+  flextable::width(width = 1.3) |>
+  flextable::font(fontname = "Arial", part = "all") |>
   flextable::fontsize(size = 11)
 
 dados_sps_familias_flex
 
 ### Salvando o flextable ----
 
-dados_sps_familias_flex %>%
+dados_sps_familias_flex |>
   flextable::save_as_docx(path = "tabela_familias_quantidade.docx")
 
 ## Espécies mais e menos abundantes ----
 
 ### Mais abundante ----
 
-dados_sps %>%
-  dplyr::summarise(`Número de espécies` = n(), .by = Espécie) %>%
-  dplyr::arrange(`Número de espécies` %>% dplyr::desc())
+dados_sps |>
+  dplyr::summarise(`Número de espécies` = n(), .by = Espécie) |>
+  dplyr::arrange(`Número de espécies` |> dplyr::desc())
 
 ### Menos abundante ----
 
-dados_sps %>%
-  dplyr::summarise(`Número de espécies` = n(), .by = Espécie) %>%
+dados_sps |>
+  dplyr::summarise(`Número de espécies` = n(), .by = Espécie) |>
   dplyr::arrange(`Número de espécies`)
 
 # Modelos lineares ----
@@ -616,28 +616,28 @@ df_riqueza <- tibble::tibble(Área = fragmentos,
                              `Área de vetação nativa` =  area_floresta$`Área total`,
                              `Área de corpos d'água` = area_corpos_dagua$`Área total`,
                              `Temp. média quart. seco` = bio_medias_temp_secos,
-                             `Prec. média quart. umido` = bio_medias_prec_umido) %>%
+                             `Prec. média quart. umido` = bio_medias_prec_umido) |>
   as.data.frame()
 
 df_riqueza
 
 ### testando multicolinearidade ----
 
-cor_matriz <- df_riqueza[3:9] %>%
-  cor(method = "spearman") %>%
+cor_matriz <- df_riqueza[3:9] |>
+  cor(method = "spearman") |>
   as.matrix()
 
 cor_matriz[upper.tri(cor_matriz)] <- NA
 
-cor_matriz %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+cor_matriz |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(tipo = "Jaccard",
                 Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
-  dplyr::select(-Igual) %>%
-  dplyr::mutate(value = value %>% round(2)) %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
+  dplyr::select(-Igual) |>
+  dplyr::mutate(value = value |> round(2)) |>
   ggplot(aes(Var1, Var2, fill = value, label = value)) +
   geom_tile(color = "black", linewidth = 0.75) +
   coord_equal() +
@@ -667,8 +667,8 @@ ggsave("correlacao_riqueza.png", height = 10, width = 12)
 
 ### Reduzindo multicolinearidade ----
 
-pca <- df_riqueza[c(3:4, 7)] %>%
-  vegan::decostand(method = "standardize") %>%
+pca <- df_riqueza[c(3:4, 7)] |>
+  vegan::decostand(method = "standardize") |>
   FactoMineR::PCA(graph = TRUE)
 
 pca$eig
@@ -679,7 +679,7 @@ pc1 <- pca$ind$coord[, 1]
 
 pc1
 
-df_riqueza_pc1 <- df_riqueza %>%
+df_riqueza_pc1 <- df_riqueza |>
   dplyr::mutate(PC1 = pc1)
 
 df_riqueza_pc1
@@ -690,19 +690,19 @@ modelo_riqueza_glm <- glm(Riqueza ~ PC1 + `NDVI médio` + `Área de vetação na
                           data = df_riqueza_pc1,
                           family = poisson(link = "log"))
 
-modelo_riqueza_glm %>% DHARMa::simulateResiduals(plot = TRUE)
+modelo_riqueza_glm |> DHARMa::simulateResiduals(plot = TRUE)
 
 ### Avaliando o modelo ----
 
-modelo_riqueza_glm %>%
+modelo_riqueza_glm |>
   summary()
 
-r2 <- modelo_riqueza_glm %>%
+r2 <- modelo_riqueza_glm |>
   rsq::rsq(adj = TRUE)
 
 r2
 
-r2_parcial <- modelo_riqueza_glm %>%
+r2_parcial <- modelo_riqueza_glm |>
   rsq::rsq.partial(adj = TRUE)
 
 r2_parcial
@@ -711,7 +711,7 @@ r2_parcial
 
 #### Criando a tabela ----
 
-sumariao_glm <- modelo_riqueza_glm %>%
+sumariao_glm <- modelo_riqueza_glm |>
   summary()
 
 sumariao_glm$df.residual
@@ -721,51 +721,51 @@ tabela_glm <- tibble::tibble(Preditor = c("PC1",
                                           "% de cobertura de vetação nativa",
                                           "Temp. média quart. seco",
                                           "Prec. média quart. umido"
-                                          )) %>%
-  dplyr::bind_cols(sumariao_glm$coefficients[-1, ]) %>%
-  dplyr::mutate(Estimate = Estimate %>% round(3),
-                `Std. Error` = `Std. Error` %>% round(3),
+                                          )) |>
+  dplyr::bind_cols(sumariao_glm$coefficients[-1, ]) |>
+  dplyr::mutate(Estimate = Estimate |> round(3),
+                `Std. Error` = `Std. Error` |> round(3),
                 `Graus de liberdade` = "5, 7",
-                `z value` = `z value` %>% round(3),
-                `Pr(>|z|)` = `Pr(>|z|)` %>% round(3)) %>%
+                `z value` = `z value` |> round(3),
+                `Pr(>|z|)` = `Pr(>|z|)` |> round(3)) |>
   tidyr::unite(col = "Coeficiente estimado ± erro padrão",
                2:3,
-               sep = " ± ") %>%
+               sep = " ± ") |>
   dplyr::rename("z" = `z value`,
-                "p" = `Pr(>|z|)`) %>%
+                "p" = `Pr(>|z|)`) |>
   dplyr::mutate(p = dplyr::case_when(p < 0.01 ~ "p < 0.01",
-                                     .default = p %>% as.character())) %>%
+                                     .default = p |> as.character())) |>
   dplyr::relocate(`Graus de liberdade`, .before = p)
 
 tabela_glm
 
 #### Criando o flextable ----
 
-tabela_glm_flex <- tabela_glm %>%
-  flextable::flextable() %>%
-  flextable::align(align = "center", part = "all") %>%
+tabela_glm_flex <- tabela_glm |>
+  flextable::flextable() |>
+  flextable::align(align = "center", part = "all") |>
   flextable::width(width = 1.3)
 
 tabela_glm_flex
 
 #### Salvando a tabela ----
 
-tabela_glm_flex %>%
+tabela_glm_flex |>
   flextable::save_as_docx(path = "tabela_estatisticas_riqueza.docx")
 
 ### Gráfico ----
 df_riqueza_pc1[c(5:6, 8:10)]
 
-df_riqueza_pc1 %>%
+df_riqueza_pc1 |>
   tidyr::pivot_longer(names_to = "Variável",
                       values_to = "Valores preditores",
-                      cols = c(5:6, 8:10)) %>%
-  dplyr::mutate(Variável = Variável %>% forcats::fct_relevel(df_riqueza_pc1[5:10] %>% names())) %>%
+                      cols = c(5:6, 8:10)) |>
+  dplyr::mutate(Variável = Variável |> forcats::fct_relevel(df_riqueza_pc1[5:10] |> names())) |>
   ggplot(aes(`Valores preditores`, Riqueza,
              fill = Variável,
              color = Variável)) +
   geom_point(shape = 21, size = 3.5, color = "black", show.legend = FALSE) +
-  geom_smooth(data = . %>% dplyr::filter(Variável %in% c("Temp. média quart. seco")),
+  geom_smooth(data = . |> dplyr::filter(Variável %in% c("Temp. média quart. seco")),
               method = "lm",
               se = FALSE,
               show.legend = FALSE) +
@@ -785,140 +785,140 @@ ggsave(filename = "modelo_riqueza.png", height = 10, width = 12)
 
 #### Composição ----
 
-distancia_comp <- sorensen_vetor %>%
+distancia_comp <- sorensen_vetor |>
   dplyr::pull(value)
 
 distancia_comp
 
 #### Número de categorias ----
 
-n_cat_matriz <- df_riqueza[3] %>%
-  vegan::vegdist(method = "bray") %>%
+n_cat_matriz <- df_riqueza[3] |>
+  vegan::vegdist(method = "bray") |>
   as.matrix()
 
 n_cat_matriz[upper.tri(n_cat_matriz)] <- NA
 
-n_cat_dist <- n_cat_matriz %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+n_cat_dist <- n_cat_matriz |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
-  dplyr::select(-Igual) %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
+  dplyr::select(-Igual) |>
   dplyr::pull(value)
 
 n_cat_dist
 
 #### Diversidade de categorias ----
 
-div_cat_matriz <- df_riqueza[4] %>%
-  vegan::vegdist(method = "euclidean") %>%
+div_cat_matriz <- df_riqueza[4] |>
+  vegan::vegdist(method = "euclidean") |>
   as.matrix()
 
 div_cat_matriz[upper.tri(div_cat_matriz)] <- NA
 
-div_cat_dist <- div_cat_matriz %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+div_cat_dist <- div_cat_matriz |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
-  dplyr::select(-Igual) %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
+  dplyr::select(-Igual) |>
   dplyr::pull(value)
 
 div_cat_dist
 
 #### NDVI médio ----
 
-ndvi_medio_matriz <- df_riqueza[5] %>%
-  vegan::vegdist(method = "euclidean") %>%
+ndvi_medio_matriz <- df_riqueza[5] |>
+  vegan::vegdist(method = "euclidean") |>
   as.matrix()
 
 ndvi_medio_matriz[upper.tri(ndvi_medio_matriz)] <- NA
 
-ndvi_medio_dist <- ndvi_medio_matriz %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+ndvi_medio_dist <- ndvi_medio_matriz |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
-  dplyr::select(-Igual) %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
+  dplyr::select(-Igual) |>
   dplyr::pull(value)
 
 ndvi_medio_dist
 
 #### Área de floresta ----
 
-area_floresta_matriz <- df_riqueza[6] %>%
-  vegan::vegdist(method = "euclidean") %>%
+area_floresta_matriz <- df_riqueza[6] |>
+  vegan::vegdist(method = "euclidean") |>
   as.matrix()
 
 area_floresta_matriz[upper.tri(area_floresta_matriz)] <- NA
 
-area_floresta_dist <- area_floresta_matriz %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+area_floresta_dist <- area_floresta_matriz |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
-  dplyr::select(-Igual) %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
+  dplyr::select(-Igual) |>
   dplyr::pull(value)
 
 area_floresta_dist
 
 #### Área de corpos d'água ----
 
-area_agua_matriz <- df_riqueza[7] %>%
-  vegan::vegdist(method = "euclidean") %>%
+area_agua_matriz <- df_riqueza[7] |>
+  vegan::vegdist(method = "euclidean") |>
   as.matrix()
 
 area_agua_matriz[upper.tri(area_agua_matriz)] <- NA
 
-area_agua_dist <- area_agua_matriz %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+area_agua_dist <- area_agua_matriz |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
-  dplyr::select(-Igual) %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
+  dplyr::select(-Igual) |>
   dplyr::pull(value)
 
 area_agua_dist
 
 #### Temperatura média do quarto mais seco ----
 
-temp_seco_matriz <- df_riqueza[8] %>%
-  vegan::vegdist(method = "euclidean") %>%
+temp_seco_matriz <- df_riqueza[8] |>
+  vegan::vegdist(method = "euclidean") |>
   as.matrix()
 
 temp_seco_matriz[upper.tri(temp_seco_matriz)] <- NA
 
-temp_seco_dist <- temp_seco_matriz %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+temp_seco_dist <- temp_seco_matriz |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
-  dplyr::select(-Igual) %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
+  dplyr::select(-Igual) |>
   dplyr::pull(value)
 
 temp_seco_dist
 
 #### Precipitação média do quarto mais umido ----
 
-prec_umido_matriz <- df_riqueza[9] %>%
-  vegan::vegdist(method = "euclidean") %>%
+prec_umido_matriz <- df_riqueza[9] |>
+  vegan::vegdist(method = "euclidean") |>
   as.matrix()
 
 prec_umido_matriz[upper.tri(prec_umido_matriz)] <- NA
 
-prec_umido_dist <- prec_umido_matriz %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+prec_umido_dist <- prec_umido_matriz |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
-  dplyr::select(-Igual) %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
+  dplyr::select(-Igual) |>
   dplyr::pull(value)
 
 prec_umido_dist
@@ -934,24 +934,24 @@ df_comp <- tibble::tibble(`Dissimilaridade de Composição` = distancia_comp,
                           `Dissimilaridade de Temp. seco` = temp_seco_dist,
                           `Dissimilaridade de Prec. úmido` = prec_umido_dist)
 
-df_comp %>% dplyr::glimpse()
+df_comp |> dplyr::glimpse()
 
 ### Testando multicolineaidade ----
 
-cor_matriz_comp <- df_comp[2:8] %>%
-  cor(method = "spearman") %>%
+cor_matriz_comp <- df_comp[2:8] |>
+  cor(method = "spearman") |>
   as.matrix()
 
 cor_matriz_comp[upper.tri(cor_matriz_comp)] <- NA
 
-cor_matriz_comp %>%
-  reshape2::melt() %>%
-  tidyr::drop_na() %>%
+cor_matriz_comp |>
+  reshape2::melt() |>
+  tidyr::drop_na() |>
   dplyr::mutate(Igual = dplyr::case_when(Var1 == Var2 ~ "Sim",
-                                         .default = "Não")) %>%
-  dplyr::filter(Igual != "Sim") %>%
-  dplyr::select(-Igual) %>%
-  dplyr::mutate(value = value %>% round(2)) %>%
+                                         .default = "Não")) |>
+  dplyr::filter(Igual != "Sim") |>
+  dplyr::select(-Igual) |>
+  dplyr::mutate(value = value |> round(2)) |>
   ggplot(aes(Var1, Var2, fill = value, label = value)) +
   geom_tile(color = "black", linewidth = 0.75) +
   coord_equal() +
@@ -993,18 +993,18 @@ modelo_comp <- glmmTMB::glmmTMB(`Dissimilaridade de Composição` ~ `Dissimilari
 
 ### Avaliando os pressupostos do modelo ----
 
-modelo_comp %>% DHARMa::simulateResiduals(plot = TRUE)
+modelo_comp |> DHARMa::simulateResiduals(plot = TRUE)
 
 ### Avaliando o modelo ----
 
-modelo_comp %>%
+modelo_comp |>
   summary()
 
 ### Tabela com as estatísticas ----
 
 #### Criando a tabela ----
 
-sumariao_glm_comp <- modelo_comp %>%
+sumariao_glm_comp <- modelo_comp |>
   summary()
 
 sumariao_glm_comp$coefficients$cond
@@ -1015,50 +1015,50 @@ tabela_glm_comp <- tibble::tibble(Preditor = c("Dissimilaridade do número de ca
                                                "Dissimilaridade da área de floresta",
                                                "Dissimilaridade da área de corpos d'água",
                                                "Dissimilaridade de Temp. seco",
-                                               "Dissimilaridade de Prec. úmido")) %>%
-  dplyr::bind_cols(sumariao_glm_comp$coefficients$cond[-1, ]) %>%
-  dplyr::mutate(Estimate = Estimate %>% round(5),
-                `Std. Error` = `Std. Error` %>% round(4),
+                                               "Dissimilaridade de Prec. úmido")) |>
+  dplyr::bind_cols(sumariao_glm_comp$coefficients$cond[-1, ]) |>
+  dplyr::mutate(Estimate = Estimate |> round(5),
+                `Std. Error` = `Std. Error` |> round(4),
                 `Graus de liberdade` = "7, 47",
-                `z value` = `z value` %>% round(2),
-                `Pr(>|z|)` = `Pr(>|z|)` %>% round(4)) %>%
+                `z value` = `z value` |> round(2),
+                `Pr(>|z|)` = `Pr(>|z|)` |> round(4)) |>
   tidyr::unite(col = "Coeficiente estimado ± erro padrão",
                2:3,
-               sep = " ± ") %>%
+               sep = " ± ") |>
   dplyr::rename("z" = `z value`,
-                "p" = `Pr(>|z|)`) %>%
+                "p" = `Pr(>|z|)`) |>
   dplyr::relocate(`Graus de liberdade`, .before = p)
 
 tabela_glm_comp
 
 #### Criando o flextable ----
 
-tabela_glm_comp_flex <- tabela_glm_comp %>%
-  flextable::flextable() %>%
-  flextable::align(align = "center", part = "all") %>%
-  flextable::width(width = 1.3) %>%
-  flextable::font(fontname = "Arial", part = "all") %>%
+tabela_glm_comp_flex <- tabela_glm_comp |>
+  flextable::flextable() |>
+  flextable::align(align = "center", part = "all") |>
+  flextable::width(width = 1.3) |>
+  flextable::font(fontname = "Arial", part = "all") |>
   flextable::fontsize(size = 11)
 
 tabela_glm_comp_flex
 
 #### Salvando a tabela ----
 
-tabela_glm_comp_flex %>%
+tabela_glm_comp_flex |>
   flextable::save_as_docx(path = "tabela_estatisticas_composicao.docx")
 
 ### Gráfico ----
 
-df_comp %>%
+df_comp |>
   tidyr::pivot_longer(names_to = "Variável",
                       values_to = "Dissimilaridade da paisagem",
-                      cols = c(2:8)) %>%
-  dplyr::mutate(Variável = Variável %>% forcats::fct_relevel(df_comp[2:7] %>% names())) %>%
+                      cols = c(2:8)) |>
+  dplyr::mutate(Variável = Variável |> forcats::fct_relevel(df_comp[2:7] |> names())) |>
   ggplot(aes(`Dissimilaridade da paisagem`, `Dissimilaridade de Composição`,
              fill = Variável,
              color = Variável)) +
   geom_point(shape = 21, size = 3.5, color = "black", show.legend = FALSE) +
-  geom_smooth(data = . %>% dplyr::filter(Variável == "Dissimilaridade do NDVI médios"),
+  geom_smooth(data = . |> dplyr::filter(Variável == "Dissimilaridade do NDVI médios"),
               method = "lm",
               se = FALSE,
               show.legend = FALSE) +
@@ -1081,40 +1081,40 @@ df_comp %>%
 ggsave(filename = "modelo_comp.png", height = 12, width = 10)
 
 
-coords_trat_sf <- coords_trat %>%
+coords_trat_sf <- coords_trat |>
   sf::st_as_sf(coords = c("Longitude", "Latitude"),
-               crs = ndvi %>% terra::crs())
+               crs = ndvi |> terra::crs())
 
-ndvi_valores <- ndvi %>%
+ndvi_valores <- ndvi |>
   terra::extract(coords_trat_sf)
 
-ndvi_valores %>%
-  dplyr::mutate(riqueza) %>%
+ndvi_valores |>
+  dplyr::mutate(riqueza) |>
   ggplot(aes(ndvi, riqueza)) +
   geom_point()
 
 
-ndvi_valores %>%
+ndvi_valores |>
   dplyr::mutate(riqueza) -> df
 
-glm(riqueza ~ ndvi, data = df, family = poisson(link = "log")) %>%
+glm(riqueza ~ ndvi, data = df, family = poisson(link = "log")) |>
   summary()
 
-bioclim_valores <- bioclim_cortado %>%
+bioclim_valores <- bioclim_cortado |>
   terra::extract(coords_trat_sf)
 
-bioclim_valores %>%
-  dplyr::mutate(riqueza) %>%
+bioclim_valores |>
+  dplyr::mutate(riqueza) |>
   tidyr::pivot_longer(cols = c(2:3),
                       values_to = "valores",
-                      names_to = "variavel") %>%
+                      names_to = "variavel") |>
   ggplot(aes(valores, riqueza)) +
   geom_point() +
   facet_wrap(~ variavel, scales = "free_x")
 
 
-bioclim_valores %>%
+bioclim_valores |>
   dplyr::mutate(riqueza) -> df
 
-glm(riqueza ~ wc2.1_30s_bio_9 + wc2.1_30s_bio_16, data = df, family = poisson(link = "log")) %>%
+glm(riqueza ~ wc2.1_30s_bio_9 + wc2.1_30s_bio_16, data = df, family = poisson(link = "log")) |>
   summary()
