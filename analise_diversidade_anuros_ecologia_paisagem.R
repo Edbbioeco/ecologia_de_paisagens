@@ -422,28 +422,19 @@ bio_medias_prec_umido
 
 ### NDVI médio ----
 
-ndvi_medias <- numeric(0)
+ndvi_medias <- purrr::map_dbl(buffers$Área,
+                              purrr::in_parallel(
 
-media_ndvi <- function(nomes_1){
+            ndvi |>
+              terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
+              terra::crop(buffers |> dplyr::filter(Área == nomes_1)) |>
+              as.data.frame(xy = TRUE) |>
+              dplyr::summarise(média = ndvi |>
+                                 mean(na.rm = TRUE)) |>
+              dplyr::pull(média)
 
-  recortando <- ndvi |>
-    terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
-    terra::crop(buffers |> dplyr::filter(Área == nomes_1))
-
-  resultado_ndvi_medio <- recortando |>
-    as.data.frame(xy = TRUE) |>
-    dplyr::summarise(média = ndvi |> mean(na.rm = TRUE)) |>
-    dplyr::pull(média)
-
-  ndvi_media <- c(resultado_ndvi_medio)
-
-  assign("ndvi_medias",
-         c(get("ndvi_medias", envir = globalenv()), resultado_ndvi_medio),
-         envir = globalenv())
-
-}
-
-purrr::walk(buffers$Área, media_ndvi)
+            ),
+            .progress = TRUE)
 
 ndvi_medias
 
