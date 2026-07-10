@@ -385,35 +385,26 @@ diversidade
 
 ### Temperatura do Quarto mais seco ----
 
-bio_medias_temp_secos <- numeric(0)
+bio_medias_temp_secos <- purrr::map_dbl(buffers$Área,
+                                        purrr::in_parallel(
 
-media_bio_temp_secos <- function(nomes_1){
+              bioclim_cortado[[1]] |>
+                terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
+                terra::crop(buffers |> dplyr::filter(Área == nomes_1)) |>
+                as.data.frame(xy = TRUE) |>
+                dplyr::summarise(média = wc2.1_30s_bio_9 |>
+                                   mean(na.rm = TRUE)) |>
+                dplyr::pull(média)
 
-  recortando <- bioclim_cortado[[1]] |>
-    terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
-    terra::crop(buffers |> dplyr::filter(Área == nomes_1))
-
-  resultado_bio_temp_seco <- recortando |>
-    as.data.frame(xy = TRUE) |>
-    dplyr::summarise(média = wc2.1_30s_bio_9 |> mean(na.rm = TRUE)) |>
-    dplyr::pull(média)
-
-  bio_medias_temp_secos <- c(resultado_bio_temp_seco)
-
-  assign("bio_medias_temp_secos",
-         c(get("bio_medias_temp_secos", envir = globalenv()), resultado_bio_temp_seco),
-         envir = globalenv())
-
-}
-
-purrr::walk(buffers$Área, media_bio_temp_secos)
+              ),
+              .progress = TRUE)
 
 bio_medias_temp_secos
 
 ### Precipitação do quarto mais umido ----
 
-bio_medias_prec_umido <- purrr::map(buffers$Área,
-                                    purrr::in_parallel(
+bio_medias_prec_umido <- purrr::map_dbl(buffers$Área,
+                                        purrr::in_parallel(
 
              bioclim_cortado[[2]] |>
                terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
@@ -423,8 +414,7 @@ bio_medias_prec_umido <- purrr::map(buffers$Área,
                dplyr::pull(média)
 
            ),
-           .progress = TRUE) |>
-  c()
+           .progress = TRUE)
 
 bio_medias_prec_umido
 
