@@ -389,8 +389,8 @@ bio_medias_temp_secos <- purrr::map_dbl(buffers$Área,
                                         purrr::in_parallel(
 
               bioclim_cortado[[1]] |>
-                terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
-                terra::crop(buffers |> dplyr::filter(Área == nomes_1)) |>
+                terra::mask(buffers |> dplyr::filter(Área == .x)) |>
+                terra::crop(buffers |> dplyr::filter(Área == .x)) |>
                 as.data.frame(xy = TRUE) |>
                 dplyr::summarise(média = wc2.1_30s_bio_9 |>
                                    mean(na.rm = TRUE)) |>
@@ -407,8 +407,8 @@ bio_medias_prec_umido <- purrr::map_dbl(buffers$Área,
                                         purrr::in_parallel(
 
              bioclim_cortado[[2]] |>
-               terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
-               terra::crop(buffers |> dplyr::filter(Área == nomes_1)) |>
+               terra::mask(buffers |> dplyr::filter(Área == .x)) |>
+               terra::crop(buffers |> dplyr::filter(Área == .x)) |>
                as.data.frame(xy = TRUE) |>
                dplyr::summarise(média = wc2.1_30s_bio_16 |> mean(na.rm = TRUE)) |>
                dplyr::pull(média)
@@ -425,9 +425,9 @@ bio_medias_prec_umido
 ndvi_medias <- purrr::map_dbl(buffers$Área,
                               purrr::in_parallel(
 
-            ndvi |>
-              terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
-              terra::crop(buffers |> dplyr::filter(Área == nomes_1)) |>
+            ~ndvi |>
+              terra::mask(buffers |> dplyr::filter(Área == .x)) |>
+              terra::crop(buffers |> dplyr::filter(Área == .x)) |>
               as.data.frame(xy = TRUE) |>
               dplyr::summarise(média = ndvi |>
                                  mean(na.rm = TRUE)) |>
