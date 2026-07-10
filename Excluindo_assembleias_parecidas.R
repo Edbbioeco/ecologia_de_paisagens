@@ -119,56 +119,55 @@ matriz_trat_2
 
 ## Checando cada Cluster ----
 
-### Criando uma função ----
-
-checando_Clusters <- function(x){
-
-  message(stringr::str_glue("# Avaliação para o {x}"))
-
-  message("## Matriz")
-
-  matriz_trat_2 %>%
-    dplyr::filter(Cluster == x) %>%
-    dplyr::select(1, 5:177) %>%
-    dplyr::select(dplyr::where(~ any(. != 0))) %>%
-    as.data.frame() %>%
-    print()
-
-  message("## Número de espécies")
-
-  matriz_trat_2 %>%
-    dplyr::filter(Cluster == x) %>%
-    dplyr::select(1, 5:177) %>%
-    dplyr::select(dplyr::where(~ any(. != 0))) %>%
-    dplyr::rename("rowname" = Assemblage) %>%
-    tibble::column_to_rownames() %>%
-    as.data.frame() %>%
-    dplyr::select_if(is.numeric) %>%
-    vegan::specnumber() %>%
-    print()
-
-  message("## Dissimilaridade")
-
-  matriz_trat_2 %>%
-    dplyr::filter(Cluster == x) %>%
-    dplyr::select(1, 5:177) %>%
-    dplyr::select(dplyr::where(~ any(. != 0))) %>%
-    dplyr::rename("rowname" = Assemblage) %>%
-    tibble::column_to_rownames() %>%
-    as.data.frame() %>%
-    dplyr::select_if(is.numeric) %>%
-    vegan::vegdist(method = "jaccard") %>%
-    print()
-
-}
-
-### Checando ----
-
-purrr::walk(matriz_trat_2 %>%
+purrr::map(matriz_trat_2 %>%
               dplyr::filter(Cluster != "Sem Cluster") %>%
               dplyr::pull(Cluster) %>%
               unique(),
-            checando_Clusters)
+            purrr::in_parallel(
+
+              \(x){
+
+                message(stringr::str_glue("# Avaliação para o {x}"))
+
+                message("## Matriz")
+
+                matriz_trat_2 %>%
+                  dplyr::filter(Cluster == x) %>%
+                  dplyr::select(1, 5:177) %>%
+                  dplyr::select(dplyr::where(~ dplyr::any(. != 0))) %>%
+                  as.data.frame() %>%
+                  print()
+
+                message("## Número de espécies")
+
+                matriz_trat_2 %>%
+                  dplyr::filter(Cluster == x) %>%
+                  dplyr::select(1, 5:177) %>%
+                  dplyr::select(dplyr::where(~ dplyr::any(. != 0))) %>%
+                  dplyr::rename("rowname" = Assemblage) %>%
+                  tibble::column_to_rownames() %>%
+                  as.data.frame() %>%
+                  dplyr::select_if(is.numeric) %>%
+                  vegan::specnumber() %>%
+                  print()
+
+                message("## Dissimilaridade")
+
+                matriz_trat_2 %>%
+                  dplyr::filter(Cluster == x) %>%
+                  dplyr::select(1, 5:177) %>%
+                  dplyr::select(dplyr::where(~ dplyr::any(. != 0))) %>%
+                  dplyr::rename("rowname" = Assemblage) %>%
+                  tibble::column_to_rownames() %>%
+                  as.data.frame() %>%
+                  dplyr::select_if(is.numeric) %>%
+                  vegan::vegdist(method = "jaccard") %>%
+                  print()
+
+                }
+
+              ),
+           .progress = TRUE)
 
 ### Avaliação ----
 
