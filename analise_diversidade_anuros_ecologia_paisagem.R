@@ -40,7 +40,7 @@ library(vegan)
 
 ### Importando ----
 
-dados_sps <- readxl::read_xlsx("anfibios_inventários.xlsx")
+dados_sps <- readxl::read_xlsx("C:/Users/LENOVO/OneDrive/Documentos/projeto mestrado/dados/anfibios")
 
 ### Visualizando ----
 
@@ -412,28 +412,19 @@ bio_medias_temp_secos
 
 ### Precipitação do quarto mais umido ----
 
-bio_medias_prec_umido <- numeric(0)
+bio_medias_prec_umido <- purrr::map(buffers$Área,
+                                    purrr::in_parallel(
 
-media_bio_prec_umido <- function(nomes_1){
+             bioclim_cortado[[2]] |>
+               terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
+               terra::crop(buffers |> dplyr::filter(Área == nomes_1)) |>
+               as.data.frame(xy = TRUE) |>
+               dplyr::summarise(média = wc2.1_30s_bio_16 |> mean(na.rm = TRUE)) |>
+               dplyr::pull(média)
 
-  recortando <- bioclim_cortado[[2]] |>
-    terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
-    terra::crop(buffers |> dplyr::filter(Área == nomes_1))
-
-  resultado_bio_prec_umido <- recortando |>
-    as.data.frame(xy = TRUE) |>
-    dplyr::summarise(média = wc2.1_30s_bio_16 |> mean(na.rm = TRUE)) |>
-    dplyr::pull(média)
-
-  bio_medias_prec_umido <- c(resultado_bio_prec_umido)
-
-  assign("bio_medias_prec_umido",
-         c(get("bio_medias_prec_umido", envir = globalenv()), resultado_bio_prec_umido),
-         envir = globalenv())
-
-}
-
-purrr::walk(buffers$Área, media_bio_prec_umido)
+           ),
+           .progress = TRUE) |>
+  c()
 
 bio_medias_prec_umido
 
