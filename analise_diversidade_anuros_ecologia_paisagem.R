@@ -442,23 +442,16 @@ ndvi_medias
 
 ### Criando uma lista com os rasters nos buffers ----
 
-gerar_buffers <- function(nomes_1, nomes_2){
+buffers_lista <- purrr::map(buffers$Área,
+                            purrr::in_parallel(
 
-  recortando <- cobertura_cortado |>
-    terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
-    terra::crop(buffers |> dplyr::filter(Área == nomes_1))
+              cobertura_cortado |>
+                terra::mask(buffers |> dplyr::filter(Área == nomes_1)) |>
+                terra::crop(buffers |> dplyr::filter(Área == nomes_1))
 
-  assign(paste0("buffer_", nomes_2), recortando, envir = globalenv())
-
-}
-
-purrr::walk2(buffers$Área, fragmentos, gerar_buffers)
-
-lista_obj_buffers <- ls(pattern = "^buffer_")
-
-buffers_lista <- mget(lista_obj_buffers)
-
-names(buffers_lista) <- fragmentos
+                             ),
+              .progress = TRUE) |>
+  setNames(fragmentos)
 
 buffers_lista
 
