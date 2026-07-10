@@ -164,42 +164,27 @@ ggplot() +
 
 ### Calculando as porcentagens ----
 
-calculo_raster <- function(x){
+total <- recortando |>
+  as.data.frame(xy = TRUE) |>
+  nrow()
 
-  recortando <- cobertura_recortado |>
-    terra::mask(buffers |> dplyr::filter(id == x)) |>
-    terra::crop(buffers |> dplyr::filter(id == x))
+porcentagens_unidos <- purrr::map(1:8,
+                                  purrr::in_parallel(
 
-  total <- recortando |>
-    as.data.frame(xy = TRUE) |>
-    nrow()
+       ~recortando <- cobertura_recortado |>
+         terra::mask(buffers |> dplyr::filter(id == .x)) |>
+         terra::crop(buffers |> dplyr::filter(id == .x)) |>
+         as.data.frame(xy = TRUE) |>
+         dplyr::group_by(brasil_coverage_2023) |>
+         dplyr::summarise(`% de ocupação` = (dplyr::n() / total) * 100) |>
+         dplyr::rename("Categoria" = brasil_coverage_2023) |>
+         dplyr::mutate(id = .x,
+                       `% de ocupação` = `% de ocupação` |> round(2)) |>
+         dplyr::relocate(id, .before = Categoria)
 
-  recortando_df <- recortando |>
-    as.data.frame(xy = TRUE) |>
-    dplyr::group_by(brasil_coverage_2023) |>
-    dplyr::summarise(`% de ocupação` = (n() / total) * 100) |>
-    dplyr::rename("Categoria" = brasil_coverage_2023) |>
-    dplyr::mutate(id = x,
-                  `% de ocupação` = `% de ocupação` |> round(2)) |>
-    dplyr::relocate(id, .before = Categoria)
-
-  assign(paste0("porcentagem_id0", x), recortando_df, envir = globalenv())
-
-}
-
-
-purrr::walk(1:8, calculo_raster)
-
-### Unindo as dataframes ----
-
-porcentagens_unidos <- dplyr::bind_rows(porcentagem_id01,
-                                        porcentagem_id02,
-                                        porcentagem_id03,
-                                        porcentagem_id04,
-                                        porcentagem_id05,
-                                        porcentagem_id06,
-                                        porcentagem_id07,
-                                        porcentagem_id08) |>
+            ),
+       .progress = TRUE) |>
+  dplyr::bind_rows() |>
   dplyr::mutate(Categoria = Categoria |> as.numeric())
 
 porcentagens_unidos
